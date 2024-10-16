@@ -23,6 +23,7 @@ type Context interface {
 	Clear(ID int64)
 	SetState(ID int64, s *State)
 	UpdateData(ID int64, dataKey string, dataValue any)
+	GetData(ID int64, dataKey string) any
 	Serve(u tg.Update) error
 	ErrorHandler(u tg.Update, err error) error
 }

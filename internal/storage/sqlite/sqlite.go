@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/mattn/go-sqlite3"
 	"telegram-bot/internal/storage"
-	"time"
 )
 
 type Storage struct {
@@ -41,14 +40,14 @@ func (s *Storage) InsertUser(ID int64, username string) error {
 	return nil
 }
 
-func (s *Storage) InsertBirthday(ID int64, name string, date time.Time, additional string, userId int64) error {
+func (s *Storage) InsertBirthday(birthday *storage.Birthday) error {
 	const fn = "storage.sqlite.InsertBirthday"
 
-	stmt, err := s.db.Prepare("INSERT INTO birthdays(id, name, date, additional, user_id) VALUES(?, ?, ?, ?, ?)")
+	stmt, err := s.db.Prepare("INSERT INTO birthdays(name, date, additional, user_id) VALUES(?, ?, ?, ?) RETURNING id")
 	if err != nil {
 		return fmt.Errorf("%s: %w", fn, err)
 	}
-	_, err = stmt.Exec(ID, name, date, additional, userId)
+	res, err := stmt.Exec(birthday.Name, birthday.Date, birthday.Additional, birthday.UserID)
 
 	if err != nil {
 		if sqliteErr, ok := err.(sqlite3.Error); ok && errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintForeignKey) {
@@ -56,6 +55,12 @@ func (s *Storage) InsertBirthday(ID int64, name string, date time.Time, addition
 		}
 		return fmt.Errorf("%s: %w", fn, err)
 	}
+
+	id, err := res.LastInsertId()
+	if err != nil {
+		return fmt.Errorf("%s: %w", fn, err)
+	}
+	birthday.ID = id
 
 	return nil
 }

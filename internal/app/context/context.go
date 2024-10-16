@@ -47,6 +47,10 @@ func (ctx *Context) UpdateData(ID int64, dataKey string, dataValue any) {
 	ctx.kvstorage.Update(ID, dataKey, dataValue)
 }
 
+func (ctx *Context) GetData(ID int64, dataKey string) any {
+	return ctx.kvstorage.Get(ID, dataKey)
+}
+
 func (ctx *Context) SetState(ID int64, s *common.State) {
 	ctx.State[ID] = s
 }
@@ -65,9 +69,11 @@ func (ctx *Context) Serve(u tg.Update) error {
 	if state.Filter(u) {
 		err := state.Handler(ctx, u)
 		ctx.logger.Error(fmt.Sprintf("%v", err))
-		return ctx.ErrorHandler(u, state.Handler(ctx, u))
+		return ctx.ErrorHandler(u, err)
 	} else {
-		return ctx.ErrorHandler(u, state.ElseFunc(ctx, u))
+		err := state.ElseFunc(ctx, u)
+		ctx.logger.Error(fmt.Sprintf("%v", err))
+		return ctx.ErrorHandler(u, err)
 	}
 }
 

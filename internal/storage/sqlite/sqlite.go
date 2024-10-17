@@ -96,12 +96,12 @@ func (s *Storage) GetBirthdays(UserID int64) ([]*storage.Birthday, error) {
 	var birthdays []*storage.Birthday
 	rows, err := stmt.Query(UserID)
 	for rows.Next() {
-		var bd *storage.Birthday
+		var bd storage.Birthday
 		err = rows.Scan(&bd.ID, &bd.Name, &bd.Date, &bd.Additional, &bd.UserID)
 		if err != nil {
 			return []*storage.Birthday{}, err
 		}
-		birthdays = append(birthdays, bd)
+		birthdays = append(birthdays, &bd)
 	}
 	return birthdays, nil
 }
@@ -115,7 +115,7 @@ func (s *Storage) GetBirthday(ID int64) (*storage.Birthday, error) {
 	}
 
 	var birthday storage.Birthday
-	err = stmt.QueryRow(ID).Scan(&birthday.ID, &birthday.Name, &birthday.Date, &birthday.Additional)
+	err = stmt.QueryRow(ID).Scan(&birthday.ID, &birthday.Name, &birthday.Date, &birthday.Additional, &birthday.UserID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, storage.ErrBirthdayNotExists

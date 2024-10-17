@@ -4,7 +4,6 @@ import (
 	"fmt"
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"telegram-bot/internal/app/common"
-	"telegram-bot/internal/storage"
 )
 
 func GetAllBirthdays(ctx common.Context, u tg.Update) error {
@@ -13,8 +12,7 @@ func GetAllBirthdays(ctx common.Context, u tg.Update) error {
 		return common.ErrNoUser
 	}
 
-	birthday, err := ctx.Db().GetBirthday(1)
-	birthdays := []*storage.Birthday{birthday}
+	birthdays, err := ctx.Db().GetBirthdays(user.ID)
 	if err != nil {
 		return err
 	}

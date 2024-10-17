@@ -68,11 +68,15 @@ func (ctx *Context) Serve(u tg.Update) error {
 
 	if state.Filter(u) {
 		err := state.Handler(ctx, u)
-		ctx.logger.Error(fmt.Sprintf("%v", err))
+		if err != nil {
+			ctx.logger.Error(fmt.Sprintf("%s", err))
+		}
 		return ctx.ErrorHandler(u, err)
 	} else {
 		err := state.ElseFunc(ctx, u)
-		ctx.logger.Error(fmt.Sprintf("%v", err))
+		if err != nil {
+			ctx.logger.Error(fmt.Sprintf("%s", err))
+		}
 		return ctx.ErrorHandler(u, err)
 	}
 }

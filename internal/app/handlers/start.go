@@ -18,7 +18,7 @@ func StartCommand(ctx common.Context, u tg.Update) error {
 	}
 	dbUser, err := ctx.Db().GetUser(user.ID)
 	if err != nil {
-		if !errors.Is(err, storage.ErrNotExists) {
+		if !errors.Is(err, storage.ErrUserNotExists) {
 			return err
 		}
 		err = ctx.Db().InsertUser(user.ID, user.UserName)

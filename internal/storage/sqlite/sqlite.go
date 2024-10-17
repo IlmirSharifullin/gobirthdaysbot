@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mattn/go-sqlite3"
+	"strings"
 	"telegram-bot/internal/storage"
 )
 
@@ -29,6 +30,7 @@ func (s *Storage) InsertUser(ID int64, username string) error {
 	if err != nil {
 		return fmt.Errorf("%s: %w", fn, err)
 	}
+	defer stmt.Close()
 	_, err = stmt.Exec(ID, username)
 	if err != nil {
 		if sqliteErr, ok := err.(sqlite3.Error); ok && errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintPrimaryKey) {
@@ -43,16 +45,14 @@ func (s *Storage) InsertUser(ID int64, username string) error {
 func (s *Storage) InsertBirthday(birthday *storage.Birthday) error {
 	const fn = "storage.sqlite.InsertBirthday"
 
-	stmt, err := s.db.Prepare("INSERT INTO birthdays(name, date, additional, user_id) VALUES(?, ?, ?, ?) RETURNING id")
+	stmt, err := s.db.Prepare("INSERT INTO birthdays(name, date, additional, user_id) VALUES(?, ?, ?, ?)")
 	if err != nil {
 		return fmt.Errorf("%s: %w", fn, err)
 	}
-	res, err := stmt.Exec(birthday.Name, birthday.Date, birthday.Additional, birthday.UserID)
+	defer stmt.Close()
 
+	res, err := stmt.Exec(birthday.Name, birthday.Date, birthday.Additional, birthday.UserID)
 	if err != nil {
-		if sqliteErr, ok := err.(sqlite3.Error); ok && errors.Is(sqliteErr.ExtendedCode, sqlite3.ErrConstraintForeignKey) {
-			return storage.ErrUserExists
-		}
 		return fmt.Errorf("%s: %w", fn, err)
 	}
 
@@ -77,7 +77,7 @@ func (s *Storage) GetUser(ID int64) (*storage.User, error) {
 	err = stmt.QueryRow(ID).Scan(&user.ID, &user.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, storage.ErrNotExists
+			return nil, storage.ErrUserNotExists
 		}
 		return nil, fmt.Errorf("%s: %w", fn, err)
 	}
@@ -114,14 +114,51 @@ func (s *Storage) GetBirthday(ID int64) (*storage.Birthday, error) {
 		return nil, fmt.Errorf("%s: %w", fn, err)
 	}
 
-	var birthday *storage.Birthday
+	var birthday storage.Birthday
 	err = stmt.QueryRow(ID).Scan(&birthday.ID, &birthday.Name, &birthday.Date, &birthday.Additional)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, storage.ErrNotExists
+			return nil, storage.ErrBirthdayNotExists
 		}
 		return nil, fmt.Errorf("%s: %w", fn, err)
 	}
 
-	return birthday, nil
+	return &birthday, nil
+}
+
+func (s *Storage) GetFilteredBirthdays(nd storage.NotificationDays) ([]*storage.Birthday, error) {
+	const fn = "storage.sqlite.GetBirthdays"
+
+	var birthdays []*storage.Birthday
+
+	var whereClause = make([]string, 0, 4)
+	if nd.WeekBefore {
+		whereClause = append(whereClause, `date = DATE("now", "-7days")`)
+	}
+	if nd.ThreeDaysBefore {
+		whereClause = append(whereClause, `date = DATE("now", "-3days")`)
+	}
+	if nd.DayBefore {
+		whereClause = append(whereClause, `date = DATE("now", "-1days")`)
+	}
+	if nd.AtBirthDay {
+		whereClause = append(whereClause, `date = DATE("now")`)
+	}
+	whereString := strings.Join(whereClause, " OR ")
+
+	rows, err := s.db.Query(fmt.Sprintf("SELECT id, name, date, additional, user_id FROM birthdays WHERE %s", whereString))
+
+	if err != nil {
+		return []*storage.Birthday{}, fmt.Errorf("%s: %w", fn, err)
+	}
+
+	for rows.Next() {
+		var bd *storage.Birthday
+		err = rows.Scan(&bd.ID, &bd.Name, &bd.Date, &bd.Additional, &bd.UserID)
+		if err != nil {
+			return []*storage.Birthday{}, err
+		}
+		birthdays = append(birthdays, bd)
+	}
+	return birthdays, nil
 }

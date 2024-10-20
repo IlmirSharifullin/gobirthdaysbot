@@ -133,32 +133,44 @@ func (s *Storage) GetFilteredBirthdays(nd storage.NotificationDays) ([]*storage.
 
 	var whereClause = make([]string, 0, 4)
 	if nd.WeekBefore {
-		whereClause = append(whereClause, `date = DATE("now", "-7days")`)
+		whereClause = append(whereClause, `next_birthday = DATE('now', '+7 days')`)
 	}
 	if nd.ThreeDaysBefore {
-		whereClause = append(whereClause, `date = DATE("now", "-3days")`)
+		whereClause = append(whereClause, `next_birthday = DATE('now', '+3 days')`)
 	}
 	if nd.DayBefore {
-		whereClause = append(whereClause, `date = DATE("now", "-1days")`)
+		whereClause = append(whereClause, `next_birthday = DATE('now', '+1 days')`)
 	}
 	if nd.AtBirthDay {
-		whereClause = append(whereClause, `date = DATE("now")`)
+		whereClause = append(whereClause, `next_birthday = DATE('now')`)
 	}
 	whereString := strings.Join(whereClause, " OR ")
 
-	rows, err := s.db.Query(fmt.Sprintf("SELECT id, name, date, additional, user_id FROM birthdays WHERE %s", whereString))
+	query := `
+	SELECT id, name, date, additional, user_id,
+		CASE 
+			WHEN strftime('%m-%d', date) >= strftime('%m-%d')
+			    THEN strftime('%Y', 'now') || '-' || strftime('%m-%d', date)
+			ELSE strftime('%Y', 'now', '+1 year') || '-' || strftime('%m-%d', date)
+		END as next_birthday
+	FROM birthdays
+	WHERE ` + whereString
+
+	rows, err := s.db.Query(query)
 
 	if err != nil {
 		return []*storage.Birthday{}, fmt.Errorf("%s: %w", fn, err)
 	}
 
+	var unused interface{}
+
 	for rows.Next() {
-		var bd *storage.Birthday
-		err = rows.Scan(&bd.ID, &bd.Name, &bd.Date, &bd.Additional, &bd.UserID)
+		var bd storage.Birthday
+		err = rows.Scan(&bd.ID, &bd.Name, &bd.Date, &bd.Additional, &bd.UserID, &unused)
 		if err != nil {
 			return []*storage.Birthday{}, err
 		}
-		birthdays = append(birthdays, bd)
+		birthdays = append(birthdays, &bd)
 	}
 	return birthdays, nil
 }

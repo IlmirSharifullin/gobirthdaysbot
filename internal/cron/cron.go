@@ -17,7 +17,7 @@ func ServeBirthdaysNotifications(ctx common.Context, nd storage.NotificationDays
 	}
 	ctx.Logger().Info(fmt.Sprintf("scheduler: found %d birthdays", len(birthdays)))
 	for _, birthday := range birthdays {
-		msg := tg.NewMessage(birthday.UserID, fmt.Sprintf("Birthday of %s is %s\n%s", birthday.Name, birthday.Date, birthday.Additional))
+		msg := tg.NewMessage(birthday.UserID, fmt.Sprintf("Birthday of %s is %s\n%s", birthday.Name, birthday.Date.Format("02.01.2006"), birthday.Additional))
 		_, err := ctx.Bot().Send(msg)
 		if err != nil {
 			ctx.Logger().Error(fmt.Sprintf("scheduler: error: %s", err))

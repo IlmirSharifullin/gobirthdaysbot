@@ -19,7 +19,7 @@ func GetAllBirthdays(ctx common.Context, u tg.Update) error {
 	ctx.Logger().Info(fmt.Sprintf("found %d birthdays", len(birthdays)))
 
 	for _, birthday := range birthdays {
-		msg := tg.NewMessage(birthday.UserID, fmt.Sprintf("Birthday of %s is %s\n%s", birthday.Name, birthday.Date, birthday.Additional))
+		msg := tg.NewMessage(birthday.UserID, fmt.Sprintf("Birthday of %s is %s\n%s", birthday.Name, birthday.Date.Format("02.01.2006"), birthday.Additional))
 		_, err := ctx.Bot().Send(msg)
 		if err != nil {
 			ctx.Logger().Error(fmt.Sprintf("error: %s", err))

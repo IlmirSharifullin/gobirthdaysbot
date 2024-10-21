@@ -4,11 +4,9 @@
 
 При разработке придерживаюсь правильной архитектуры: структура проекта, использование контекста, DAL, логирования.
 
-Запуск доступен только через билд cmd/mybot/main.go файла:
+Запуск через docker compose:
 
-```go build cmd/mybot/main.go```
-
-В будущем добавлю Dockerfile и docker-compose.yml для запуска в изолированном контейнере
+```docker compose up --build -d```
 
 *TODO:* 
 1. Notifications (schedule).

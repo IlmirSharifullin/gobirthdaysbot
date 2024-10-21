@@ -44,9 +44,9 @@ func GetUpdates(updates tg.UpdatesChannel, ctx common.Context) {
 		}
 		if update.Message.Command() == "start" {
 			err = handlers.StartCommand(ctx, update)
-		} else if update.Message.Command() == "add" {
+		} else if update.Message.Command() == "add" || update.Message.Text == "Add a birthday" {
 			err = handlers.BirthdayAddCommand(ctx, update)
-		} else if update.Message.Command() == "get" {
+		} else if update.Message.Command() == "get" || update.Message.Text == "Get all birthdays" {
 			err = handlers.GetAllBirthdays(ctx, update)
 		} else {
 			err = ctx.Serve(update)

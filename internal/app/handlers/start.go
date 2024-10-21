@@ -25,16 +25,19 @@ func StartCommand(ctx common.Context, u tg.Update) error {
 		if err != nil {
 			return err
 		}
-
-		_, err = ctx.Bot().Send(tg.NewMessage(user.ID, "Hello to my new bot developed on Golang!"))
+		msg := tg.NewMessage(user.ID, "Hello to my new bot developed on Golang!")
+		msg.ReplyMarkup = common.KeyboardMenu
+		_, err = ctx.Bot().Send(msg)
 		return err
 	} else {
-		_, err = ctx.Bot().Send(tg.NewMessage(user.ID, fmt.Sprintf("Hello again, %s!", defaultUsername(dbUser.Username))))
+		msg := tg.NewMessage(user.ID, fmt.Sprintf("Hello again, %s!", getUsername(dbUser.Username)))
+		msg.ReplyMarkup = common.KeyboardMenu
+		_, err = ctx.Bot().Send(msg)
 		return err
 	}
 }
 
-func defaultUsername(s string) string {
+func getUsername(s string) string {
 	if s == "" {
 		return "Guest"
 	}

@@ -24,13 +24,13 @@ func main() {
 
 	storage, err := sqlite.New(cfg.StoragePath)
 	if err != nil {
-		logger.Error(fmt.Sprintf("%v", err))
+		logger.Error(fmt.Sprintf("main: %v", err))
 		os.Exit(1)
 	}
 
 	bot, err := tg.NewBotAPI(cfg.Telegram.BotToken)
 	if err != nil {
-		logger.Error(fmt.Sprintf("%v", err))
+		logger.Error(fmt.Sprintf("main: %v", err))
 		os.Exit(1)
 	}
 

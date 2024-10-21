@@ -56,7 +56,7 @@ func BirthdayDate(ctx common.Context, u tg.Update) error {
 		return common.ErrNoUser
 	}
 
-	dateOfBirth, err := time.Parse(time.DateOnly, u.Message.Text)
+	dateOfBirth, err := time.Parse("02.01.2006", u.Message.Text)
 	if err != nil {
 		return common.ErrNotDate
 	}

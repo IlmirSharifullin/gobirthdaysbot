@@ -5,6 +5,7 @@ import (
 	tg "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"telegram-bot/internal/app/common"
 	"telegram-bot/internal/storage"
+	"telegram-bot/pkg/dates"
 )
 
 func ServeBirthdaysNotifications(ctx common.Context, nd storage.NotificationDays) {
@@ -17,7 +18,7 @@ func ServeBirthdaysNotifications(ctx common.Context, nd storage.NotificationDays
 	}
 	ctx.Logger().Info(fmt.Sprintf("scheduler: found %d birthdays", len(birthdays)))
 	for _, birthday := range birthdays {
-		msg := tg.NewMessage(birthday.UserID, fmt.Sprintf("Birthday of %s is %s\n%s", birthday.Name, birthday.Date.Format("02.01.2006"), birthday.Additional))
+		msg := tg.NewMessage(birthday.UserID, fmt.Sprintf("Birthday of %s is %s\n%s", birthday.Name, dates.CalculateDate(birthday.Date), birthday.Additional))
 		_, err := ctx.Bot().Send(msg)
 		if err != nil {
 			ctx.Logger().Error(fmt.Sprintf("scheduler: error: %s", err))

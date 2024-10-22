@@ -11,8 +11,11 @@ var MsgNotNil = func(u tg.Update) bool {
 	return u.Message != nil
 }
 
-func GetBirthdayCard(birthday *storage.Birthday) string {
+func GetBirthdayCard(birthday *storage.Birthday) tg.MessageConfig {
 	years, days := dates.CalculateDate(birthday.Date)
-	text := fmt.Sprintf("%s\n\nBirthday is %s (%s turns %d %s)\n%s", birthday.Name, birthday.Date.Format("02.01.2006"), birthday.Name, years, days, birthday.Additional)
-	return text
+	text := fmt.Sprintf("👤 %s\n\n📅 %s (turns %d %s)\n📜 %s", birthday.Name, birthday.Date.Format("02.01.2006"), years, days, birthday.Additional)
+
+	msg := tg.NewMessage(birthday.UserID, text)
+	msg.ReplyMarkup = MakeCardMarkup(birthday)
+	return msg
 }

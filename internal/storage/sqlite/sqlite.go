@@ -64,6 +64,31 @@ func (s *Storage) InsertBirthday(birthday *storage.Birthday) error {
 
 	return nil
 }
+func (s *Storage) DeleteBirthday(birthdayID int64, userID int64) error {
+	const fn = "storage.sqlite.DeleteBirthday"
+
+	stmt, err := s.db.Prepare("DELETE FROM birthdays WHERE id=? AND user_id=?")
+	if err != nil {
+		return fmt.Errorf("%s: %w", fn, err)
+	}
+	defer stmt.Close()
+
+	res, err := stmt.Exec(birthdayID, userID)
+	if err != nil {
+		return fmt.Errorf("%s: %w", fn, err)
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("%s: %w", fn, err)
+	}
+
+	if count == 0 {
+		return storage.ErrNoDeleted
+	}
+
+	return nil
+}
 
 func (s *Storage) GetUser(ID int64) (*storage.User, error) {
 	const fn = "storage.sqlite.GetUser"
@@ -72,6 +97,7 @@ func (s *Storage) GetUser(ID int64) (*storage.User, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", fn, err)
 	}
+	defer stmt.Close()
 
 	var user storage.User
 	err = stmt.QueryRow(ID).Scan(&user.ID, &user.Username)
@@ -92,6 +118,7 @@ func (s *Storage) GetBirthdays(UserID int64) ([]*storage.Birthday, error) {
 	if err != nil {
 		return []*storage.Birthday{}, fmt.Errorf("%s: %w", fn, err)
 	}
+	defer stmt.Close()
 
 	var birthdays []*storage.Birthday
 	rows, err := stmt.Query(UserID)
@@ -113,6 +140,7 @@ func (s *Storage) GetBirthday(ID int64) (*storage.Birthday, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", fn, err)
 	}
+	defer stmt.Close()
 
 	var birthday storage.Birthday
 	err = stmt.QueryRow(ID).Scan(&birthday.ID, &birthday.Name, &birthday.Date, &birthday.Additional, &birthday.UserID)
@@ -127,7 +155,7 @@ func (s *Storage) GetBirthday(ID int64) (*storage.Birthday, error) {
 }
 
 func (s *Storage) GetNextBirthdays(UserID int64) ([]*storage.Birthday, error) {
-	const fn = "storage.sqlite.GetNextBirthday"
+	const fn = "storage.sqlite.GetNextBirthdays"
 
 	query := `WITH ranked_birthdays AS (SELECT *,
                                  dense_rank() OVER (PARTITION BY user_id ORDER BY
@@ -146,6 +174,7 @@ WHERE user_id = ? AND drank = 1;`
 	if err != nil {
 		return nil, fmt.Errorf("%s: %w", fn, err)
 	}
+	defer stmt.Close()
 
 	var birthdays []*storage.Birthday
 	rows, err := stmt.Query(UserID)
@@ -165,7 +194,7 @@ WHERE user_id = ? AND drank = 1;`
 }
 
 func (s *Storage) GetFilteredBirthdays(nd storage.NotificationDays) ([]*storage.Birthday, error) {
-	const fn = "storage.sqlite.GetBirthdays"
+	const fn = "storage.sqlite.GetFilteredBirthdays"
 
 	var birthdays []*storage.Birthday
 
@@ -206,7 +235,7 @@ func (s *Storage) GetFilteredBirthdays(nd storage.NotificationDays) ([]*storage.
 		var bd storage.Birthday
 		err = rows.Scan(&bd.ID, &bd.Name, &bd.Date, &bd.Additional, &bd.UserID, &unused)
 		if err != nil {
-			return []*storage.Birthday{}, err
+			return []*storage.Birthday{}, fmt.Errorf("%s: %w", fn, err)
 		}
 		birthdays = append(birthdays, &bd)
 	}

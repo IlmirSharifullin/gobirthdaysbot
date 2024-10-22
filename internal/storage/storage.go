@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	ErrNoDeleted         = errors.New("birthdayID does not exist or birthday is not user's")
 	ErrUserExists        = errors.New("user with this ID already exists")
 	ErrUserNotExists     = errors.New("user with this ID not exists")
 	ErrBirthdayNotExists = errors.New("birthday with this ID not exists")
@@ -20,6 +21,7 @@ type Storage interface {
 	GetNextBirthdays(UserID int64) ([]*Birthday, error)
 	GetFilteredBirthdays(nd NotificationDays) ([]*Birthday, error)
 	InsertBirthday(birthday *Birthday) error
+	DeleteBirthday(birthdayID int64, userID int64) error
 }
 
 type User struct {

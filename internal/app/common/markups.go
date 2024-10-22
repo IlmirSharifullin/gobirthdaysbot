@@ -6,5 +6,6 @@ var KeyboardMenu = tg.NewReplyKeyboard(
 	tg.NewKeyboardButtonRow(
 		tg.NewKeyboardButton("Add a birthday"),
 		tg.NewKeyboardButton("Get all birthdays"),
+		tg.NewKeyboardButton("Get next birthday"),
 	),
 )

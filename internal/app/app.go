@@ -36,21 +36,24 @@ func GetUpdates(updates tg.UpdatesChannel, ctx common.Context) {
 	}
 	c.Start()
 
-	for update := range updates {
-		var err error
+	for upd := range updates {
+		go func(update tg.Update) {
+			var err error
 
-		if !common.MsgNotNil(update) {
-			continue
-		}
-		if update.Message.Command() == "start" {
-			err = handlers.StartCommand(ctx, update)
-		} else if update.Message.Command() == "add" || update.Message.Text == "Add a birthday" {
-			err = handlers.BirthdayAddCommand(ctx, update)
-		} else if update.Message.Command() == "get" || update.Message.Text == "Get all birthdays" {
-			err = handlers.GetAllBirthdays(ctx, update)
-		} else {
-			err = ctx.Serve(update)
-		}
+			if !common.MsgNotNil(update) {
+				return
+			}
+			if update.Message.Command() == "start" {
+				err = handlers.StartCommand(ctx, update)
+			} else if update.Message.Command() == "add" || update.Message.Text == "Add a birthday" {
+				err = handlers.BirthdayAddCommand(ctx, update)
+			} else if update.Message.Command() == "get" || update.Message.Text == "Get all birthdays" {
+				err = handlers.GetAllBirthdays(ctx, update)
+			} else if update.Message.Command() == "get_next" || update.Message.Text == "Get next birthday" {
+				err = handlers.GetNextBirthday(ctx, update)
+			} else {
+				err = ctx.Serve(update)
+			}
 
 		if err != nil {
 			ctx.Logger().Error(fmt.Sprintf("%v", err))

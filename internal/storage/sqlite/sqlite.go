@@ -126,6 +126,44 @@ func (s *Storage) GetBirthday(ID int64) (*storage.Birthday, error) {
 	return &birthday, nil
 }
 
+func (s *Storage) GetNextBirthdays(UserID int64) ([]*storage.Birthday, error) {
+	const fn = "storage.sqlite.GetNextBirthday"
+
+	query := `WITH ranked_birthdays AS (SELECT *,
+                                 dense_rank() OVER (PARTITION BY user_id ORDER BY
+                                     CASE
+                                         WHEN strftime('%m-%d', date) < strftime('%m-%d', 'now')
+                                             THEN '2' || strftime('%m-%d', date)
+                                         ELSE strftime('%m-%d', date)
+                                         END) AS drank
+                          FROM birthdays)
+
+SELECT id, name, date, additional, user_id
+FROM ranked_birthdays
+WHERE user_id = ? AND drank = 1;`
+
+	stmt, err := s.db.Prepare(query)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", fn, err)
+	}
+
+	var birthdays []*storage.Birthday
+	rows, err := stmt.Query(UserID)
+	for rows.Next() {
+		var birthday storage.Birthday
+		err := rows.Scan(&birthday.ID, &birthday.Name, &birthday.Date, &birthday.Additional, &birthday.UserID)
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return nil, storage.ErrBirthdayNotExists
+			}
+			return nil, fmt.Errorf("%s: %w", fn, err)
+		}
+		birthdays = append(birthdays, &birthday)
+	}
+
+	return birthdays, nil
+}
+
 func (s *Storage) GetFilteredBirthdays(nd storage.NotificationDays) ([]*storage.Birthday, error) {
 	const fn = "storage.sqlite.GetBirthdays"
 

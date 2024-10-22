@@ -17,6 +17,7 @@ type Storage interface {
 
 	GetBirthday(ID int64) (*Birthday, error)
 	GetBirthdays(UserID int64) ([]*Birthday, error)
+	GetNextBirthdays(UserID int64) ([]*Birthday, error)
 	GetFilteredBirthdays(nd NotificationDays) ([]*Birthday, error)
 	InsertBirthday(birthday *Birthday) error
 }

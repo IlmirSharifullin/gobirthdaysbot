@@ -8,11 +8,10 @@
 
 ```docker compose up --build -d```
 
-*TODO:* 
-1. Notifications (schedule).
-2. implement redis, postgresql
-3. docker
-4. CRUD birthdays
-5. add groups of people (friends, family, etc)
-6. CRUD groups
-7. ...
+**TODO:**
+
+1. implement redis, postgresql
+2. CRUD birthdays
+3. add groups of people (friends, family, etc.)
+4. CRUD groups
+5. ...
